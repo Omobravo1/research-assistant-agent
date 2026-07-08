@@ -1,5 +1,7 @@
 import streamlit as st
 
+from rag.embeddings import EmbeddingGenerator
+from rag.vectorstore import VectorStore
 from agent.orchestrator import ResearchAgent
 from tools.pdf_reader import PDFReader
 from rag.chunker import TextChunker
@@ -21,6 +23,8 @@ st.set_page_config(
 agent = ResearchAgent()
 pdf_reader = PDFReader()
 chunker = TextChunker()
+embedding_generator = EmbeddingGenerator()
+vector_store = VectorStore()
 
 # ---------------------------------------------------
 # SESSION STATE
@@ -63,6 +67,8 @@ with st.sidebar:
             stats = pdf_reader.get_statistics(pdf)
 
             chunks = chunker.split(stats["text"])
+            embeddings = embedding_generator.create_embeddings(chunks)
+            vector_store.add_document(pdf.name, chunks, embeddings)
 
             total_chunks += len(chunks)
 
@@ -98,6 +104,7 @@ Chunks: {len(chunks)}
         st.markdown("---")
 
         st.info(f"Total Chunks: {total_chunks}")
+        st.success(f"Vectors Stored: {vector_store.count()}")
 
     st.markdown("---")
 
