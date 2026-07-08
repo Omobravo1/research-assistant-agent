@@ -2,6 +2,7 @@ import streamlit as st
 
 from agent.orchestrator import ResearchAgent
 from tools.pdf_reader import PDFReader
+from rag.chunker import TextChunker
 
 # ---------------------------------------------------
 # PAGE CONFIGURATION
@@ -14,12 +15,12 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------
-# AGENT
+# SERVICES
 # ---------------------------------------------------
 
 agent = ResearchAgent()
-
 pdf_reader = PDFReader()
+chunker = TextChunker()
 
 # ---------------------------------------------------
 # SESSION STATE
@@ -53,13 +54,28 @@ with st.sidebar:
 
         st.subheader("📚 Uploaded Papers")
 
+        total_chunks = 0
+
         for pdf in uploaded_files:
 
             pdf.seek(0)
 
             stats = pdf_reader.get_statistics(pdf)
 
-            st.session_state.documents.append(stats)
+            chunks = chunker.split(stats["text"])
+
+            total_chunks += len(chunks)
+
+            st.session_state.documents.append(
+                {
+                    "name": pdf.name,
+                    "pages": stats["pages"],
+                    "words": stats["words"],
+                    "characters": stats["characters"],
+                    "text": stats["text"],
+                    "chunks": chunks,
+                }
+            )
 
             st.success(pdf.name)
 
@@ -70,15 +86,24 @@ Pages: {stats['pages']}
 Words: {stats['words']:,}
 
 Characters: {stats['characters']:,}
+
+Chunks: {len(chunks)}
 """
             )
+
+            with st.expander("Preview First Chunk"):
+
+                st.write(chunks[0][:1000])
+
+        st.markdown("---")
+
+        st.info(f"Total Chunks: {total_chunks}")
 
     st.markdown("---")
 
     if st.button("🗑 Clear Chat"):
 
         st.session_state.messages = []
-
         st.rerun()
 
 # ---------------------------------------------------
