@@ -2,6 +2,8 @@ import streamlit as st
 
 from agent.orchestrator import ResearchAgent
 
+from tools.pdf_reader import extract_text_from_pdf
+
 # ---------------------------------------------------
 # PAGE CONFIGURATION
 # ---------------------------------------------------
@@ -41,6 +43,20 @@ with st.sidebar:
         type=["pdf"],
         accept_multiple_files=True
     )
+
+    if uploaded_files: st.success(f"{len(uploaded_files)} PDF(s) uploaded.")
+
+    for pdf in uploaded_files:
+
+        text = extract_text_from_pdf(pdf)
+
+        st.write(f"📄 {pdf.name}")
+
+        st.write(f"Characters extracted: {len(text):,}")
+
+        with st.expander("Preview"):
+
+            st.write(text[:1000])
 
     st.markdown("---")
 
