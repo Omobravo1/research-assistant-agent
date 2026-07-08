@@ -1,8 +1,7 @@
 import streamlit as st
 
 from agent.orchestrator import ResearchAgent
-
-from tools.pdf_reader import extract_text_from_pdf
+from tools.pdf_reader import PDFReader
 
 # ---------------------------------------------------
 # PAGE CONFIGURATION
@@ -12,14 +11,15 @@ st.set_page_config(
     page_title="AI Research Assistant",
     page_icon="🔬",
     layout="wide",
-    initial_sidebar_state="expanded"
 )
 
 # ---------------------------------------------------
-# CREATE AGENT
+# AGENT
 # ---------------------------------------------------
 
 agent = ResearchAgent()
+
+pdf_reader = PDFReader()
 
 # ---------------------------------------------------
 # SESSION STATE
@@ -27,6 +27,9 @@ agent = ResearchAgent()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+if "documents" not in st.session_state:
+    st.session_state.documents = []
 
 # ---------------------------------------------------
 # SIDEBAR
@@ -36,41 +39,47 @@ with st.sidebar:
 
     st.title("🔬 Research Assistant")
 
-    st.markdown("---")
-
     uploaded_files = st.file_uploader(
         "Upload Research Papers",
-        type=["pdf"],
-        accept_multiple_files=True
+        type="pdf",
+        accept_multiple_files=True,
     )
 
-    if uploaded_files: st.success(f"{len(uploaded_files)} PDF(s) uploaded.")
+    if uploaded_files:
 
-    for pdf in uploaded_files:
+        st.session_state.documents = []
 
-        text = extract_text_from_pdf(pdf)
+        st.markdown("---")
 
-        st.write(f"📄 {pdf.name}")
+        st.subheader("📚 Uploaded Papers")
 
-        st.write(f"Characters extracted: {len(text):,}")
+        for pdf in uploaded_files:
 
-        with st.expander("Preview"):
+            pdf.seek(0)
 
-            st.write(text[:1000])
+            stats = pdf_reader.get_statistics(pdf)
+
+            st.session_state.documents.append(stats)
+
+            st.success(pdf.name)
+
+            st.caption(
+                f"""
+Pages: {stats['pages']}
+
+Words: {stats['words']:,}
+
+Characters: {stats['characters']:,}
+"""
+            )
 
     st.markdown("---")
 
     if st.button("🗑 Clear Chat"):
+
         st.session_state.messages = []
+
         st.rerun()
-
-    st.button("📄 Generate Report")
-
-    st.button("⚙ Settings")
-
-    st.markdown("---")
-
-    st.success("Agent Status: Online")
 
 # ---------------------------------------------------
 # MAIN PAGE
@@ -78,9 +87,7 @@ with st.sidebar:
 
 st.title("🔬 AI Research Assistant")
 
-st.caption(
-    "Search the web, analyze research papers, and generate professional reports."
-)
+st.caption("Research papers • Web Search • AI")
 
 # ---------------------------------------------------
 # CHAT HISTORY
@@ -89,29 +96,31 @@ st.caption(
 for message in st.session_state.messages:
 
     with st.chat_message(message["role"]):
+
         st.markdown(message["content"])
 
 # ---------------------------------------------------
 # CHAT INPUT
 # ---------------------------------------------------
 
-prompt = st.chat_input("Ask me anything...")
+prompt = st.chat_input("Ask a research question...")
 
 if prompt:
 
     st.session_state.messages.append(
         {
             "role": "user",
-            "content": prompt
+            "content": prompt,
         }
     )
 
     with st.chat_message("user"):
+
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
 
-        with st.spinner("Researching..."):
+        with st.spinner("Thinking..."):
 
             response = agent.process(prompt)
 
@@ -120,6 +129,6 @@ if prompt:
     st.session_state.messages.append(
         {
             "role": "assistant",
-            "content": response
+            "content": response,
         }
     )

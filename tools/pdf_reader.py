@@ -1,36 +1,51 @@
 """
 PDF Reader Tool
-
-Responsible for extracting text from uploaded PDF files.
 """
 
 from pypdf import PdfReader
 
 
-def extract_text_from_pdf(uploaded_file):
-    """
-    Extract all text from a PDF file.
+class PDFReader:
 
-    Parameters
-    ----------
-    uploaded_file : UploadedFile
-        Streamlit uploaded PDF.
+    def extract_text(self, uploaded_file):
 
-    Returns
-    -------
-    str
-        Complete extracted text.
-    """
+        reader = PdfReader(uploaded_file)
 
-    reader = PdfReader(uploaded_file)
+        text = ""
 
-    text = ""
+        for page in reader.pages:
 
-    for page in reader.pages:
+            page_text = page.extract_text()
 
-        page_text = page.extract_text()
+            if page_text:
 
-        if page_text:
-            text += page_text + "\n"
+                text += page_text + "\n"
 
-    return text
+        return text
+
+    def get_page_count(self, uploaded_file):
+
+        reader = PdfReader(uploaded_file)
+
+        return len(reader.pages)
+
+    def get_statistics(self, uploaded_file):
+
+        text = self.extract_text(uploaded_file)
+
+        uploaded_file.seek(0)
+
+        pages = self.get_page_count(uploaded_file)
+
+        uploaded_file.seek(0)
+
+        words = len(text.split())
+
+        characters = len(text)
+
+        return {
+            "pages": pages,
+            "words": words,
+            "characters": characters,
+            "text": text,
+        }
