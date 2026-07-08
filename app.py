@@ -1,4 +1,5 @@
 import streamlit as st
+from agent.llm import ask_llm
 
 # -------------------------
 # Page Configuration
@@ -86,6 +87,7 @@ prompt = st.chat_input("Ask me anything...")
 
 if prompt:
 
+    # Save and display the user's message
     st.session_state.messages.append(
         {
             "role": "user",
@@ -96,18 +98,19 @@ if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    response = (
-        "👋 Hello! I'm your AI Research Assistant.\n\n"
-        "At the moment, I'm still under development.\n\n"
-        "In the next phase I'll be connected to an LLM so I can answer your research questions."
-    )
+    # Generate AI response
+    with st.chat_message("assistant"):
 
+        with st.spinner("Thinking..."):
+
+            response = ask_llm(prompt)
+
+            st.markdown(response)
+
+    # Save the assistant's response
     st.session_state.messages.append(
         {
             "role": "assistant",
             "content": response
         }
     )
-
-    with st.chat_message("assistant"):
-        st.markdown(response)
