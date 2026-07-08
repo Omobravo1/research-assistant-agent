@@ -1,9 +1,10 @@
 import streamlit as st
-from agent.llm import ask_llm
 
-# -------------------------
-# Page Configuration
-# -------------------------
+from agent.orchestrator import ResearchAgent
+
+# ---------------------------------------------------
+# PAGE CONFIGURATION
+# ---------------------------------------------------
 
 st.set_page_config(
     page_title="AI Research Assistant",
@@ -12,16 +13,22 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# -------------------------
-# Session State
-# -------------------------
+# ---------------------------------------------------
+# CREATE AGENT
+# ---------------------------------------------------
+
+agent = ResearchAgent()
+
+# ---------------------------------------------------
+# SESSION STATE
+# ---------------------------------------------------
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# -------------------------
-# Sidebar
-# -------------------------
+# ---------------------------------------------------
+# SIDEBAR
+# ---------------------------------------------------
 
 with st.sidebar:
 
@@ -30,7 +37,7 @@ with st.sidebar:
     st.markdown("---")
 
     uploaded_files = st.file_uploader(
-        "Upload Research Papers (PDF)",
+        "Upload Research Papers",
         type=["pdf"],
         accept_multiple_files=True
     )
@@ -47,22 +54,11 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.info(
-        """
-        **Version:** 1.0
+    st.success("Agent Status: Online")
 
-        Built using:
-
-        - Streamlit
-        - OpenAI
-        - LangChain
-        - FAISS
-        """
-    )
-
-# -------------------------
-# Main Page
-# -------------------------
+# ---------------------------------------------------
+# MAIN PAGE
+# ---------------------------------------------------
 
 st.title("🔬 AI Research Assistant")
 
@@ -70,24 +66,23 @@ st.caption(
     "Search the web, analyze research papers, and generate professional reports."
 )
 
-# -------------------------
-# Display Chat History
-# -------------------------
+# ---------------------------------------------------
+# CHAT HISTORY
+# ---------------------------------------------------
 
 for message in st.session_state.messages:
 
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# -------------------------
-# Chat Input
-# -------------------------
+# ---------------------------------------------------
+# CHAT INPUT
+# ---------------------------------------------------
 
 prompt = st.chat_input("Ask me anything...")
 
 if prompt:
 
-    # Save and display the user's message
     st.session_state.messages.append(
         {
             "role": "user",
@@ -98,16 +93,14 @@ if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Generate AI response
     with st.chat_message("assistant"):
 
-        with st.spinner("Thinking..."):
+        with st.spinner("Researching..."):
 
-            response = ask_llm(prompt)
+            response = agent.process(prompt)
 
             st.markdown(response)
 
-    # Save the assistant's response
     st.session_state.messages.append(
         {
             "role": "assistant",
