@@ -1,27 +1,28 @@
-"""
-Agent Orchestrator
-
-This file is responsible for deciding which tool
-should answer the user's request.
-"""
-
 from agent.llm import ask_llm
 
 
 class ResearchAgent:
-    """
-    Main AI agent.
 
-    For now, every request goes directly to the LLM.
+    def process(
+        self,
+        user_input,
+        context=None,
+    ):
 
-    Later this class will decide whether to:
+        if context:
 
-    - Search uploaded PDFs
-    - Search the web
-    - Use memory
-    - Generate reports
-    """
+            prompt = f"""
+Use ONLY the information below to answer the user's question.
 
-    def process(self, user_input: str) -> str:
+Context
+
+{context}
+
+Question
+
+{user_input}
+"""
+
+            return ask_llm(prompt)
 
         return ask_llm(user_input)

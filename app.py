@@ -5,6 +5,7 @@ from rag.vectorstore import VectorStore
 from agent.orchestrator import ResearchAgent
 from tools.pdf_reader import PDFReader
 from rag.chunker import TextChunker
+from rag.retriever import Retriever
 
 # ---------------------------------------------------
 # PAGE CONFIGURATION
@@ -25,6 +26,7 @@ pdf_reader = PDFReader()
 chunker = TextChunker()
 embedding_generator = EmbeddingGenerator()
 vector_store = VectorStore()
+retriever = Retriever(vector_store)
 
 # ---------------------------------------------------
 # SESSION STATE
@@ -154,7 +156,21 @@ if prompt:
 
         with st.spinner("Thinking..."):
 
-            response = agent.process(prompt)
+            context = None
+
+            if vector_store.count() > 0:
+
+                retrieved_chunks = retriever.retrieve(prompt)
+
+                context = "\n\n".join(
+                    chunk["chunk"]
+                    for chunk in retrieved_chunks
+                )
+
+            response = agent.process(
+                prompt,
+                context,
+            )
 
             st.markdown(response)
 
