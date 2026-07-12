@@ -6,4 +6,4 @@ __pycache__/
 *.pyd
 .vscode/
 uploads/
-reports/
+reports/*.pdf
