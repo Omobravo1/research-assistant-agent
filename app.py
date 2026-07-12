@@ -6,6 +6,7 @@ from agent.orchestrator import ResearchAgent
 from tools.pdf_reader import PDFReader
 from rag.chunker import TextChunker
 from rag.retriever import Retriever
+from tools.report_generator import ReportGenerator
 
 # ---------------------------------------------------
 # PAGE CONFIGURATION
@@ -22,12 +23,12 @@ st.set_page_config(
 # ---------------------------------------------------
 
 agent = ResearchAgent()
+report_generator = ReportGenerator()
 pdf_reader = PDFReader()
 chunker = TextChunker()
 embedding_generator = EmbeddingGenerator()
 vector_store = VectorStore()
 retriever = Retriever(vector_store)
-
 # ---------------------------------------------------
 # SESSION STATE
 # ---------------------------------------------------
@@ -37,6 +38,18 @@ if "messages" not in st.session_state:
 
 if "documents" not in st.session_state:
     st.session_state.documents = []
+
+if "last_question" not in st.session_state:
+    st.session_state.last_question = ""
+
+if "last_answer" not in st.session_state:
+    st.session_state.last_answer = ""
+
+if "last_sources" not in st.session_state:
+    st.session_state.last_sources = []
+
+if "report_ready" not in st.session_state:
+    st.session_state.report_ready = False
 
 # ---------------------------------------------------
 # SIDEBAR
@@ -53,8 +66,6 @@ with st.sidebar:
     )
 
     if uploaded_files:
-
-        st.session_state.documents = []
 
         st.markdown("---")
 
@@ -88,15 +99,25 @@ with st.sidebar:
             st.success(pdf.name)
 
             st.caption(
-                f"""
-Pages: {stats['pages']}
+                                f"""
+                Pages: {stats['pages']}
 
-Words: {stats['words']:,}
+                Words: {stats['words']:,}
 
-Characters: {stats['characters']:,}
+                Characters: {stats['characters']:,}
 
-Chunks: {len(chunks)}
-"""
+                Chunks: {len(chunks)}
+                """
+            )
+
+            st.info(
+                """
+                ✅ Upload one or more research papers.
+
+                🌐 Ask questions about uploaded papers or current topics.
+
+                📄 Generate a downloadable research report.
+                """
             )
 
             with st.expander("Preview First Chunk"):
@@ -108,13 +129,51 @@ Chunks: {len(chunks)}
         st.info(f"Total Chunks: {total_chunks}")
         st.success(f"Vectors Stored: {vector_store.count()}")
 
-    st.markdown("---")
+        st.markdown("---")
 
-    if st.button("🗑 Clear Chat"):
+        if st.button("📄 Generate Report"):
 
-        st.session_state.messages = []
-        st.rerun()
+            if st.session_state.last_answer:
 
+                filename = "reports/research_report.pdf"
+
+                report_generator.generate(
+                    filename,
+                    st.session_state.last_question,
+                    st.session_state.last_answer,
+                    st.session_state.last_sources,
+)
+
+                st.session_state.report_ready = True
+
+            else:
+
+                st.warning("Ask a research question first.")
+
+        if st.session_state.report_ready:
+
+            with open("reports/research_report.pdf", "rb") as file:
+
+                st.download_button(
+                    label="⬇ Download Report",
+                    data=file,
+                    file_name="Research_Report.pdf",
+                    mime="application/pdf",
+                )
+
+        st.markdown("---")
+
+        if st.button("🗑 Clear Chat"):
+
+            st.session_state.messages = []
+            st.session_state.documents = []
+            st.session_state.last_question = ""
+            st.session_state.last_answer = ""
+            st.session_state.last_sources = []
+            st.session_state.report_ready = False
+
+            
+            st.rerun()
 # ---------------------------------------------------
 # MAIN PAGE
 # ---------------------------------------------------
@@ -157,6 +216,7 @@ if prompt:
         with st.spinner("Thinking..."):
 
             context = None
+            sources = []
 
             if vector_store.count() > 0:
 
@@ -167,12 +227,34 @@ if prompt:
                     for chunk in retrieved_chunks
                 )
 
+                sources = list(
+                    set(
+                        chunk["filename"]
+                        for chunk in retrieved_chunks
+                    )
+                )
+
+                st.session_state.last_sources = sources
+            
             response = agent.process(
                 prompt,
                 context,
             )
 
+            st.session_state.last_question = prompt
+            st.session_state.last_answer = response
+
             st.markdown(response)
+
+            if vector_store.count() > 0 and sources:
+
+                st.markdown("---")
+
+                st.markdown("### 📚 Sources Used")
+
+                for source in sources:
+
+                    st.write(f"📄 {source}")
 
     st.session_state.messages.append(
         {
