@@ -79,8 +79,25 @@ with st.sidebar:
 
             stats = pdf_reader.get_statistics(pdf)
 
+            if not stats["text"].strip():
+
+                st.error(
+                    f"{pdf.name} contains no extractable text.\n\n"
+                    "It is likely a scanned PDF. OCR is required to process this document."
+                )
+
+                continue
+
             chunks = chunker.split(stats["text"])
+
+            if not chunks:
+
+                st.warning(f"No text chunks could be created from {pdf.name}.")
+
+                continue
+
             embeddings = embedding_generator.create_embeddings(chunks)
+            
             vector_store.add_document(pdf.name, chunks, embeddings)
 
             total_chunks += len(chunks)
