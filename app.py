@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 
 from rag.embeddings import EmbeddingGenerator
@@ -97,7 +98,7 @@ with st.sidebar:
                 continue
 
             embeddings = embedding_generator.create_embeddings(chunks)
-            
+
             vector_store.add_document(pdf.name, chunks, embeddings)
 
             total_chunks += len(chunks)
@@ -152,7 +153,10 @@ with st.sidebar:
 
             if st.session_state.last_answer:
 
-                filename = "reports/research_report.pdf"
+                REPORT_DIR = os.path.join(os.getcwd(), "reports")
+                os.makedirs(REPORT_DIR, exist_ok=True)
+
+                filename = os.path.join(REPORT_DIR, "research_report.pdf")
 
                 report_generator.generate(
                     filename,

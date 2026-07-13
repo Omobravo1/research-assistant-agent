@@ -1,21 +1,24 @@
 # Changelog
 
-## Version 0.1.0
+## Version 1.0
 
 ### Added
-- Initial Streamlit project setup
-- Professional chat interface
+
 - OpenAI integration
-- Agent orchestration layer
-- Git repository
-- GitHub repository
+- PDF upload
+- PDF extraction
+- Text chunking
+- Embeddings
+- FAISS vector database
+- Retrieval-Augmented Generation
+- Research question answering
+- Source attribution
+- PDF report generation
+- Multiple PDF support
+- Error handling for scanned PDFs
 
-### Status
+### Improved
 
-✅ Phase 1 Complete
-
-✅ Phase 2 Complete
-
-✅ Phase 3 Complete
-
-✅ Phase 4 Complete
+- Switched from pypdf to PyMuPDF
+- Better PDF compatibility
+- Cleaner UI
