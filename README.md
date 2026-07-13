@@ -120,6 +120,13 @@ streamlit run app.py
 - Export to Word
 
 ---
+## Video
+
+https://drive.google.com/file/d/187t-LhYLvm359D_2RafwYv9m0pr8L0VN/view?usp=sharing
+
+## Live Application URL
+
+https://research-assistant-agent-8lnjxciz87gb9ynuxydyjc.streamlit.app/
 
 ## Author
 
